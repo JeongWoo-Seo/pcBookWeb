@@ -6,12 +6,14 @@ import (
 	"log"
 
 	"github.com/JeongWoo-Seo/pcBookWeb/server/internal/network/http"
+	"github.com/JeongWoo-Seo/pcBookWeb/server/internal/service"
 )
 
 func main() {
 	port := flag.Int("port", 0, "server port")
 
-	httpServer, err := http.NewServer()
+	service := service.NewService()
+	httpServer, err := http.NewHttpNetwork(service)
 	if err != nil {
 		log.Fatal("failed to ")
 	}
