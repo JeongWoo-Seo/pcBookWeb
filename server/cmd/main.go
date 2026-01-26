@@ -15,8 +15,9 @@ func main() {
 	service := service.NewService()
 	httpServer, err := http.NewHttpNetwork(service)
 	if err != nil {
-		log.Fatal("failed to ")
+		log.Fatal("failed to htttp server")
 	}
+
 	address := fmt.Sprintf("0.0.0.0:%d", *port)
 	httpServer.Start(address)
 }

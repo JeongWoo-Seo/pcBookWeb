@@ -1,8 +1,6 @@
 package service
 
-import (
-	"context"
-)
+import "github.com/gin-gonic/gin"
 
 type LaptopService struct {
 	//rdb *redis.Client
@@ -13,7 +11,7 @@ func NewLaptopService() *LaptopService {
 	return &LaptopService{}
 }
 
-// func (s *LaptopService) GetActiveLaptopList(ctx context.Context) ([]string, error) {
+// func (s *LaptopService) GetActiveLaptopList(ctx *gin.Context) ([]string, error) {
 // 	// Redis SET: active:laptops
 // 	laptops, err := s.rdb.SMembers(ctx, "active:laptops").Result()
 // 	if err != nil {
@@ -22,7 +20,7 @@ func NewLaptopService() *LaptopService {
 // 	return laptops, nil
 // }
 
-func (s *LaptopService) GetActiveLaptopList(ctx context.Context) ([]string, error) {
+func (s *LaptopService) GetActiveLaptopList(ctx *gin.Context) ([]string, error) {
 	laptops := []string{
 		"test1",
 		"test2",

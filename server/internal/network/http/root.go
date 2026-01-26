@@ -18,7 +18,7 @@ func NewHttpNetwork(service *service.Service) (*HttpNetwork, error) {
 
 	httpNetwork.engine.Use(corsMiddleware())
 
-	NewLaptopRouter(service.LaptopService)
+	NewLaptopRouter(httpNetwork, service.LaptopService)
 
 	return httpNetwork, nil
 }

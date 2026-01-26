@@ -8,13 +8,22 @@ import (
 )
 
 type LaptopRouter struct {
+	router        *HttpNetwork
 	laptopService *service.LaptopService
 }
 
-func NewLaptopRouter(laptopService *service.LaptopService) *LaptopRouter {
-	return &LaptopRouter{
+func NewLaptopRouter(httpNetwork *HttpNetwork, laptopService *service.LaptopService) *LaptopRouter {
+	r := &LaptopRouter{
+		router:        httpNetwork,
 		laptopService: laptopService,
 	}
+
+	api := httpNetwork.engine.Group("/laptop")
+	{
+		api.GET("/list", r.List)
+	}
+
+	return r
 }
 
 func (h *LaptopRouter) List(c *gin.Context) {
