@@ -1,6 +1,7 @@
 package http
 
 import (
+	"github.com/JeongWoo-Seo/pcBookWeb/server/internal/network/ws"
 	"github.com/JeongWoo-Seo/pcBookWeb/server/internal/service"
 	"github.com/gin-gonic/gin"
 )
@@ -17,6 +18,10 @@ func NewHttpNetwork(service *service.Service) (*HttpNetwork, error) {
 	}
 
 	httpNetwork.engine.Use(corsMiddleware())
+
+	hub := ws.NewHub()
+	go hub.Run()
+	httpNetwork.engine.GET("/ws", ws.HandleWebSocket(hub))
 
 	NewLaptopRouter(httpNetwork, service.LaptopService)
 

@@ -11,6 +11,7 @@ import (
 
 func main() {
 	port := flag.Int("port", 0, "server port")
+	flag.Parse()
 
 	service := service.NewService()
 	httpServer, err := http.NewHttpNetwork(service)
