@@ -23,34 +23,12 @@ func HandleWebSocket(hub *Hub) gin.HandlerFunc {
 		client := &Client{
 			hub:  hub,
 			conn: conn,
-			send: make(chan []byte, 256),
+			send: make(chan string, 16),
 		}
 
-		hub.register <- client
+		hub.Register <- client
 
 		go writePump(client)
 		go readPump(client)
-	}
-}
-
-func readPump(c *Client) {
-	defer func() {
-		c.hub.unregister <- c
-		c.conn.Close()
-	}()
-
-	for {
-		_, _, err := c.conn.ReadMessage()
-		if err != nil {
-			break
-		}
-	}
-}
-
-func writePump(c *Client) {
-	defer c.conn.Close()
-
-	for msg := range c.send {
-		c.conn.WriteMessage(websocket.TextMessage, msg)
 	}
 }

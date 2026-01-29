@@ -1,6 +1,9 @@
 package http
 
 import (
+	"strconv"
+	"time"
+
 	"github.com/JeongWoo-Seo/pcBookWeb/server/internal/network/ws"
 	"github.com/JeongWoo-Seo/pcBookWeb/server/internal/service"
 	"github.com/gin-gonic/gin"
@@ -22,6 +25,7 @@ func NewHttpNetwork(service *service.Service) (*HttpNetwork, error) {
 	hub := ws.NewHub()
 	go hub.Run()
 	httpNetwork.engine.GET("/ws", ws.HandleWebSocket(hub))
+	StartCounter(hub)
 
 	NewLaptopRouter(httpNetwork, service.LaptopService)
 
@@ -44,4 +48,15 @@ func corsMiddleware() gin.HandlerFunc {
 		}
 		c.Next()
 	}
+}
+
+func StartCounter(hub *ws.Hub) {
+	go func() {
+		count := 0
+		for {
+			count++
+			hub.Broadcast <- strconv.Itoa(count) // 숫자 → string
+			time.Sleep(1 * time.Second)
+		}
+	}()
 }
