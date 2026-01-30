@@ -4,34 +4,15 @@ export default function useLaptopWS(onMessage) {
   const wsRef = useRef(null);
 
   useEffect(() => {
-    const ws = new WebSocket("ws://localhost:8080/ws");
-    wsRef.current = ws;
+    wsRef.current = new WebSocket("ws://localhost:8081/ws");
 
-    ws.onopen = () => {
-      console.log("WebSocket connected");
-    };
-
-    ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        onMessage(data);
-      } catch (e) {
-        console.error("invalid ws message", event.data);
-      }
-    };
-
-    ws.onerror = (err) => {
-      console.error("WebSocket error", err);
-    };
-
-    ws.onclose = () => {
-      console.log("WebSocket closed");
+    wsRef.current.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      onMessage(data);
     };
 
     return () => {
-      ws.close();
+      wsRef.current.close();
     };
-  }, [onMessage]);
-
-  return wsRef;
+  }, []);
 }

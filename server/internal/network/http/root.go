@@ -1,23 +1,28 @@
 package http
 
 import (
+	"context"
 	"strconv"
 	"time"
 
 	"github.com/JeongWoo-Seo/pcBookWeb/server/internal/network/ws"
+	"github.com/JeongWoo-Seo/pcBookWeb/server/internal/redisutil"
 	"github.com/JeongWoo-Seo/pcBookWeb/server/internal/service"
 	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
 )
 
 type HttpNetwork struct {
 	engine  *gin.Engine
 	service *service.Service
+	rdb     *redis.Client
 }
 
-func NewHttpNetwork(service *service.Service) (*HttpNetwork, error) {
+func NewHttpNetwork(service *service.Service, rdb *redis.Client) (*HttpNetwork, error) {
 	httpNetwork := &HttpNetwork{
 		engine:  gin.Default(),
 		service: service,
+		rdb:     rdb,
 	}
 
 	httpNetwork.engine.Use(corsMiddleware())
@@ -25,7 +30,8 @@ func NewHttpNetwork(service *service.Service) (*HttpNetwork, error) {
 	hub := ws.NewHub()
 	go hub.Run()
 	httpNetwork.engine.GET("/ws", ws.HandleWebSocket(hub))
-	StartCounter(hub)
+
+	redisutil.StartSubscriber(context.Background(), httpNetwork.rdb, hub)
 
 	NewLaptopRouter(httpNetwork, service.LaptopService)
 
