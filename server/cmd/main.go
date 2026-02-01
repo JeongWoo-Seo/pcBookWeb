@@ -17,7 +17,7 @@ func main() {
 	rdb := redisutil.NewRedisClient()
 	defer rdb.Close()
 
-	service := service.NewService()
+	service := service.NewService(rdb)
 	httpServer, err := http.NewHttpNetwork(service, rdb)
 	if err != nil {
 		log.Fatal("failed to htttp server")

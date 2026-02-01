@@ -8,34 +8,18 @@ import BatteryChart from "./charts/BatteryChart";
 
 const MAX_POINTS = 60;
 
-export default function LaptopMonitor() {
-  const [data, setData] = useState([]);
+export default function LaptopMonitor({ laptopId }) {
+  if (!laptopId) {
+    return <div>Select a laptop to monitor</div>;
+  }
 
-  useLaptopWS((msg) => {
-    const time = new Date().toLocaleTimeString();
-
-    const point = {
-      time,
-      cpu: msg.cpu,
-      ram: msg.ram.usage,
-      storage: msg.storages.usage,
-      rx: msg.network.rx,
-      tx: msg.network.tx,
-      battery: msg.battery,
-    };
-
-    setData((prev) => [...prev, point].slice(-MAX_POINTS));
-  });
 
   return (
-    <div>
-      <h2>Laptop Monitor</h2>
+    <div style={{ flex: 1 }}>
+      <h3>Monitoring: {laptopId}</h3>
 
-      <CpuChart data={data} />
-      <RamChart data={data} />
-      <StorageChart data={data} />
-      <NetworkChart data={data} />
-      <BatteryChart data={data} />
+      {/* WebSocket / Chart 컴포넌트 */}
+      {/* CPUChart, RAMChart, BatteryChart ... */}
     </div>
   );
 }
