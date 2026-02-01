@@ -3,27 +3,10 @@ import { getLaptopList } from "../api/laptop";
 
 export default function LaptopList({ selected, onSelect }) {
   const [laptops, setLaptops] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const load = async () => {
-      try {
-        const list = await getLaptopList();
-        setLaptops(list || []);
-      } catch (err) {
-        console.error(err);
-        setError("Failed to load laptop list");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    load();
+    getLaptopList().then(setLaptops);
   }, []);
-
-  if (loading) return <div>Loading laptops...</div>;
-  if (error) return <div>{error}</div>;
 
   return (
     <div style={{ minWidth: 200 }}>

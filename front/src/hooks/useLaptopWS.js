@@ -1,18 +1,19 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 
 export default function useLaptopWS(onMessage) {
-  const wsRef = useRef(null);
-
   useEffect(() => {
-    wsRef.current = new WebSocket("ws://localhost:8081/ws");
+    const ws = new WebSocket("ws://localhost:8081/ws");
 
-    wsRef.current.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      onMessage(data);
+    ws.onmessage = (e) => {
+      onMessage(e.data);
+    };
+
+    ws.onerror = (e) => {
+      console.error("WebSocket error", e);
     };
 
     return () => {
-      wsRef.current.close();
+      ws.close();
     };
-  }, []);
+  }, [onMessage]);
 }
