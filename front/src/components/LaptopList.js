@@ -9,18 +9,17 @@ export default function LaptopList({ selected, onSelect }) {
   }, []);
 
   return (
-    <div style={{ minWidth: 200 }}>
+    <div>
       <h3>Active Laptops</h3>
       <ul>
         {laptops.map((id) => (
           <li
             key={id}
-            onClick={() => onSelect(id)}
             style={{
               cursor: "pointer",
               fontWeight: selected === id ? "bold" : "normal",
-              color: selected === id ? "blue" : "black",
             }}
+            onClick={() => onSelect(id)}
           >
             {id}
           </li>

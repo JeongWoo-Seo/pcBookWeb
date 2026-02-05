@@ -2,6 +2,7 @@ package redisutil
 
 import (
 	"context"
+	"encoding/json"
 	"log"
 	"time"
 
@@ -26,16 +27,22 @@ func NewRedisClient() *redis.Client {
 	return rdb
 }
 
-func StartSubscriber(ctx context.Context, rdb *redis.Client, hub *ws.Hub) {
-	sub := rdb.Subscribe(ctx, "laptop-updates")
+func StartRedisSubscriber(ctx context.Context, hub *ws.Hub, rdb *redis.Client) {
+	sub := rdb.Subscribe(ctx, "laptop-metrics")
+	ch := sub.Channel()
 
-	go func() {
-		ch := sub.Channel()
-		log.Println("[Redis] subscribed to laptop-updates")
-
-		for msg := range ch {
-			log.Println("[Redis] received:", msg.Payload)
-			hub.Broadcast <- msg.Payload
+	for msg := range ch {
+		var payload struct {
+			ID string `json:"id"`
 		}
-	}()
+
+		if err := json.Unmarshal([]byte(msg.Payload), &payload); err != nil {
+			continue
+		}
+
+		hub.Dispatch <- ws.WSMessage{
+			Payload:  []byte(msg.Payload),
+			LaptopID: payload.ID,
+		}
+	}
 }

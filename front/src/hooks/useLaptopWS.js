@@ -1,19 +1,32 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
-export default function useLaptopWS(onMessage) {
+export default function useLaptopWS({ mode, laptopID, onMessage }) {
+  const wsRef = useRef(null);
+
   useEffect(() => {
-    const ws = new WebSocket("ws://localhost:8081/ws");
+    let url = "ws://localhost:8081/ws";
 
-    ws.onmessage = (e) => {
-      onMessage(e.data);
+    if (mode === "single" && laptopID) {
+      url += `?mode=single&id=${laptopID}`;
+    } else {
+      url += "?mode=broadcast";
+    }
+
+    const ws = new WebSocket(url);
+    wsRef.current = ws;
+
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        onMessage?.(data);
+      } catch (e) {
+        console.error("WS parse error", e);
+      }
     };
 
-    ws.onerror = (e) => {
-      console.error("WebSocket error", e);
-    };
+    ws.onerror = (e) => console.error("WS error", e);
+    ws.onclose = () => console.log("WS closed");
 
-    return () => {
-      ws.close();
-    };
-  }, [onMessage]);
+    return () => ws.close();
+  }, [mode, laptopID]);
 }

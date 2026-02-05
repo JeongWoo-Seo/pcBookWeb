@@ -1,10 +1,15 @@
 package ws
 
+type WSMessage struct {
+	Payload  []byte
+	LaptopID string
+}
+
 type Hub struct {
 	Clients    map[*Client]bool
 	Register   chan *Client
 	Unregister chan *Client
-	Broadcast  chan string
+	Dispatch   chan WSMessage
 }
 
 func NewHub() *Hub {
@@ -12,13 +17,14 @@ func NewHub() *Hub {
 		Clients:    make(map[*Client]bool),
 		Register:   make(chan *Client),
 		Unregister: make(chan *Client),
-		Broadcast:  make(chan string),
+		Dispatch:   make(chan WSMessage, 256),
 	}
 }
 
 func (h *Hub) Run() {
 	for {
 		select {
+
 		case c := <-h.Register:
 			h.Clients[c] = true
 
@@ -28,13 +34,10 @@ func (h *Hub) Run() {
 				close(c.send)
 			}
 
-		case msg := <-h.Broadcast:
+		case msg := <-h.Dispatch:
 			for c := range h.Clients {
-				select {
-				case c.send <- msg:
-				default:
-					delete(h.Clients, c)
-					close(c.send)
+				if c.mode == "broadcast" || (c.mode == "single" && c.laptopID == msg.LaptopID) {
+					c.send <- msg.Payload
 				}
 			}
 		}

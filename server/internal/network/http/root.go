@@ -2,8 +2,6 @@ package http
 
 import (
 	"context"
-	"strconv"
-	"time"
 
 	"github.com/JeongWoo-Seo/pcBookWeb/server/internal/network/ws"
 	"github.com/JeongWoo-Seo/pcBookWeb/server/internal/redisutil"
@@ -30,8 +28,7 @@ func NewHttpNetwork(service *service.Service, rdb *redis.Client) (*HttpNetwork, 
 	hub := ws.NewHub()
 	go hub.Run()
 	httpNetwork.engine.GET("/ws", ws.HandleWebSocket(hub))
-
-	redisutil.StartSubscriber(context.Background(), httpNetwork.rdb, hub)
+	go redisutil.StartRedisSubscriber(context.Background(), hub, httpNetwork.rdb)
 
 	NewLaptopRouter(httpNetwork, service.LaptopService)
 
@@ -54,15 +51,4 @@ func corsMiddleware() gin.HandlerFunc {
 		}
 		c.Next()
 	}
-}
-
-func StartCounter(hub *ws.Hub) {
-	go func() {
-		count := 0
-		for {
-			count++
-			hub.Broadcast <- strconv.Itoa(count) // 숫자 → string
-			time.Sleep(1 * time.Second)
-		}
-	}()
 }

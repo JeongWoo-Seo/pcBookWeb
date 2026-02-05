@@ -3,9 +3,11 @@ package ws
 import "github.com/gorilla/websocket"
 
 type Client struct {
-	hub  *Hub
-	conn *websocket.Conn
-	send chan string
+	hub      *Hub
+	conn     *websocket.Conn
+	send     chan []byte
+	laptopID string
+	mode     string
 }
 
 func readPump(c *Client) {
