@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/JeongWoo-Seo/pcBookWeb/server/internal/network/ws"
-	"github.com/JeongWoo-Seo/pcBookWeb/server/internal/redisutil"
 	"github.com/JeongWoo-Seo/pcBookWeb/server/internal/service"
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
@@ -25,10 +24,9 @@ func NewHttpNetwork(service *service.Service, rdb *redis.Client) (*HttpNetwork, 
 
 	httpNetwork.engine.Use(corsMiddleware())
 
-	hub := ws.NewHub()
-	go hub.Run()
+	hub := ws.NewHub(rdb)
+	go hub.Run(context.Background())
 	httpNetwork.engine.GET("/ws", ws.HandleWebSocket(hub))
-	go redisutil.StartRedisSubscriber(context.Background(), hub, httpNetwork.rdb)
 
 	NewLaptopRouter(httpNetwork, service.LaptopService)
 
