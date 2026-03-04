@@ -71,7 +71,6 @@ func (h *Hub) consumeRedis(sub *redis.PubSub, laptopID string) {
 	ch := sub.Channel()
 
 	for msg := range ch {
-
 		clients := h.ClientsByLaptop[laptopID]
 
 		for c := range clients {

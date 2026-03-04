@@ -2,7 +2,8 @@ package service
 
 import (
 	"context"
-	"strings"
+	"strconv"
+	"time"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -19,15 +20,20 @@ func (s *LaptopService) GetActiveLaptopList(
 	ctx context.Context,
 ) ([]string, error) {
 
-	keys, err := s.rdb.Keys(ctx, "laptop:alive:*").Result()
+	expireAfter := int64(30) //30초
+	now := time.Now().Unix()
+
+	laptops, err := s.rdb.ZRangeByScore(
+		ctx,
+		"laptop:alive",
+		&redis.ZRangeBy{
+			Min: strconv.FormatInt(now-expireAfter, 10),
+			Max: "+inf",
+		},
+	).Result()
+
 	if err != nil {
 		return nil, err
-	}
-
-	laptops := make([]string, 0, len(keys))
-	for _, key := range keys {
-		id := strings.TrimPrefix(key, "laptop:alive:")
-		laptops = append(laptops, id)
 	}
 
 	return laptops, nil
