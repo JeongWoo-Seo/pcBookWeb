@@ -1,11 +1,13 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log"
 
 	"github.com/JeongWoo-Seo/pcBookWeb/server/internal/network/http"
+	"github.com/JeongWoo-Seo/pcBookWeb/server/internal/network/ws"
 	"github.com/JeongWoo-Seo/pcBookWeb/server/internal/redisutil"
 	"github.com/JeongWoo-Seo/pcBookWeb/server/internal/service"
 )
@@ -18,7 +20,10 @@ func main() {
 	defer rdb.Close()
 
 	service := service.NewService(rdb)
-	httpServer, err := http.NewHttpNetwork(service, rdb)
+	hub := ws.NewHub(rdb)
+	go hub.Run(context.Background())
+
+	httpServer, err := http.NewHttpNetwork(service, rdb, hub)
 	if err != nil {
 		log.Fatal("failed to htttp server")
 	}

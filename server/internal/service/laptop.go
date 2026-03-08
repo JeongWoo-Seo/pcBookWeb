@@ -20,7 +20,7 @@ func (s *LaptopService) GetActiveLaptopList(
 	ctx context.Context,
 ) ([]string, error) {
 
-	expireAfter := int64(30) //30초
+	expireAfter := int64(10) //10초 내 활성화 된 laptop
 	now := time.Now().Unix()
 
 	laptops, err := s.rdb.ZRangeByScore(

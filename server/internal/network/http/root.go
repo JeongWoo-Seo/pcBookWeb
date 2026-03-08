@@ -1,8 +1,6 @@
 package http
 
 import (
-	"context"
-
 	"github.com/JeongWoo-Seo/pcBookWeb/server/internal/network/ws"
 	"github.com/JeongWoo-Seo/pcBookWeb/server/internal/service"
 	"github.com/gin-gonic/gin"
@@ -15,7 +13,7 @@ type HttpNetwork struct {
 	rdb     *redis.Client
 }
 
-func NewHttpNetwork(service *service.Service, rdb *redis.Client) (*HttpNetwork, error) {
+func NewHttpNetwork(service *service.Service, rdb *redis.Client, hub *ws.Hub) (*HttpNetwork, error) {
 	httpNetwork := &HttpNetwork{
 		engine:  gin.Default(),
 		service: service,
@@ -24,8 +22,6 @@ func NewHttpNetwork(service *service.Service, rdb *redis.Client) (*HttpNetwork, 
 
 	httpNetwork.engine.Use(corsMiddleware())
 
-	hub := ws.NewHub(rdb)
-	go hub.Run(context.Background())
 	httpNetwork.engine.GET("/ws", ws.HandleWebSocket(hub))
 
 	NewLaptopRouter(httpNetwork, service.LaptopService)
