@@ -33,7 +33,7 @@ func HandleWebSocket(hub *Hub) gin.HandlerFunc {
 
 		hub.Register <- client
 
-		go writePump(client)
-		go readPump(client)
+		go client.writePump()
+		go client.readPump()
 	}
 }

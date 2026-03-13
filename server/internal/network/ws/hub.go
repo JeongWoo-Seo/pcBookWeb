@@ -2,6 +2,7 @@ package ws
 
 import (
 	"context"
+	"log"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -57,7 +58,7 @@ func (h *Hub) Run(ctx context.Context) {
 			if clients, ok := h.LaptopClients[c.laptopID]; ok {
 
 				delete(clients, c)
-
+				log.Println("client disconnected:", c.laptopID)
 				// 더이상 구독 중인 front가 없을 경우 redis 구독 채널을 삭제함
 				if len(clients) == 0 {
 					delete(h.LaptopClients, c.laptopID)
