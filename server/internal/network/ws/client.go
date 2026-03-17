@@ -25,11 +25,11 @@ func (c *Client) readPump() {
 		c.conn.Close()
 	}()
 
-	c.conn.SetReadLimit(512)
+	c.conn.SetReadLimit(512) //메시지 크기 제한(bytes)
 
-	c.conn.SetReadDeadline(time.Now().Add(pongWait))
+	c.conn.SetReadDeadline(time.Now().Add(pongWait)) //일정 시간까지 read 가 없으면 connection 종료
 
-	c.conn.SetPongHandler(func(string) error {
+	c.conn.SetPongHandler(func(string) error { //read timeout 연장
 		c.conn.SetReadDeadline(time.Now().Add(pongWait))
 		return nil
 	})
@@ -55,17 +55,18 @@ func (c *Client) writePump() {
 		case message, ok := <-c.send:
 			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 
-			if !ok {
+			if !ok { //클라이언트 연결 종료 메시지
 				c.conn.WriteMessage(websocket.CloseMessage, []byte{})
 				return
 			}
 
+			//WebSocket frame writer 생성 - 여러 메시지를 하나의 fram으로 전송
 			w, err := c.conn.NextWriter(websocket.TextMessage)
 			if err != nil {
 				return
 			}
 
-			w.Write(message)
+			w.Write(message) //첫번째 메시지를 frame으로 전달
 
 			// batching 시작
 			n := len(c.send)

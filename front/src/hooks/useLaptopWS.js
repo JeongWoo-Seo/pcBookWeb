@@ -17,10 +17,18 @@ export default function useLaptopWS({ mode, laptopID, onMessage }) {
 
     ws.onmessage = (event) => {
       try {
-        const data = JSON.parse(event.data);
-        onMessage?.(data);
+        // batching 대응
+        const messages = event.data.split("\n");
+
+        messages.forEach((m) => {
+          if (!m) return;
+
+          const data = JSON.parse(m);
+          onMessage?.(data);
+        });
+
       } catch (e) {
-        console.error("WS parse error", e);
+        console.error("WS parse error", e, event.data);
       }
     };
 
