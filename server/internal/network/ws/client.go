@@ -16,6 +16,7 @@ type Client struct {
 
 const pongWait = 60 * time.Second
 const pingPeriod = 30 * time.Second
+const writeWait = 10 * time.Second
 
 func (c *Client) readPump() {
 	// front 종료시 클라이언트 리스트에서 등록 삭제
@@ -43,7 +44,6 @@ func (c *Client) readPump() {
 
 func (c *Client) writePump() {
 	ticker := time.NewTicker(pingPeriod)
-
 	defer func() {
 		ticker.Stop()
 		c.conn.Close()
@@ -52,22 +52,35 @@ func (c *Client) writePump() {
 	for {
 		select {
 
-		case msg, ok := <-c.send:
+		case message, ok := <-c.send:
+			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 
 			if !ok {
 				c.conn.WriteMessage(websocket.CloseMessage, []byte{})
 				return
 			}
 
-			err := c.conn.WriteMessage(websocket.TextMessage, msg)
+			w, err := c.conn.NextWriter(websocket.TextMessage)
 			if err != nil {
 				return
 			}
 
-		case <-ticker.C:
+			w.Write(message)
 
-			err := c.conn.WriteMessage(websocket.PingMessage, nil)
-			if err != nil {
+			// batching 시작
+			n := len(c.send)
+			for i := 0; i < n; i++ {
+				w.Write([]byte{'\n'})
+				w.Write(<-c.send)
+			}
+
+			if err := w.Close(); err != nil {
+				return
+			}
+
+		case <-ticker.C:
+			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
+			if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
 				return
 			}
 		}

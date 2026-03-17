@@ -56,10 +56,9 @@ func (h *Hub) Run(ctx context.Context) {
 		case c := <-h.Unregister:
 
 			if clients, ok := h.LaptopClients[c.laptopID]; ok {
-
 				delete(clients, c)
 				log.Println("client disconnected:", c.laptopID)
-				// 더이상 구독 중인 front가 없을 경우 redis 구독 채널을 삭제함
+				// 더이상 구독 중인 front가 없을 경우 redis 구독 goroutine을 삭제함
 				if len(clients) == 0 {
 					delete(h.LaptopClients, c.laptopID)
 					h.unsubscribe(c.laptopID)
@@ -76,6 +75,9 @@ func (h *Hub) Run(ctx context.Context) {
 					select {
 					case c.send <- msg.Payload:
 					default:
+						// client가 느려 send chan이 다 차면, 처리 속도가 느린 클라이언트로 인식하여 연결을 종료
+						close(c.send)
+						delete(clients, c)
 					}
 				}
 			}
@@ -98,17 +100,23 @@ func (h *Hub) ensureSubscribe(ctx context.Context, laptopID string) {
 
 	h.RedisSubs[laptopID] = sub
 
-	go h.consumeRedis(sub, laptopID)
+	go h.consumeRedis(ctx, sub, laptopID)
 }
 
 // redis 메시지 수신 goroutine
-func (h *Hub) consumeRedis(sub *redis.PubSub, laptopID string) {
+func (h *Hub) consumeRedis(ctx context.Context, sub *redis.PubSub, laptopID string) {
 	ch := sub.Channel()
 
-	for msg := range ch {
-		h.Dispatch <- RedisMessage{
-			LaptopID: laptopID,
-			Payload:  []byte(msg.Payload),
+	for {
+		select {
+		case msg := <-ch:
+			h.Dispatch <- RedisMessage{
+				LaptopID: laptopID,
+				Payload:  []byte(msg.Payload),
+			}
+
+		case <-ctx.Done():
+			return
 		}
 	}
 }
