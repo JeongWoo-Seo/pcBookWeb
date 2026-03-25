@@ -105,18 +105,20 @@ func (h *Hub) ensureSubscribe(ctx context.Context, laptopID string) {
 
 // redis 메시지 수신 goroutine
 func (h *Hub) consumeRedis(ctx context.Context, sub *redis.PubSub, laptopID string) {
-	ch := sub.Channel()
-
 	for {
-		select {
-		case msg := <-ch:
-			h.Dispatch <- RedisMessage{
-				LaptopID: laptopID,
-				Payload:  []byte(msg.Payload),
+		msg, err := sub.ReceiveMessage(ctx)
+		if err != nil {
+			if ctx.Err() != nil {
+				return
 			}
 
-		case <-ctx.Done():
-			return
+			log.Println("redis receive error:", err)
+			continue
+		}
+
+		h.Dispatch <- RedisMessage{
+			LaptopID: laptopID,
+			Payload:  []byte(msg.Payload),
 		}
 	}
 }
